@@ -17,6 +17,7 @@ class _MyAppState extends State<MyApp> {
   Valik _valik = Valik.Esimene;
   TextEditingController _controller = TextEditingController();
   List<Widget> bodyList;
+  List<bool> isSelected = List.generate(Algo.values.length, (index) => false);
   bool hasResult = false;
   bool error = false;
 
@@ -25,9 +26,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    resWidget = Padding(
-      padding: EdgeInsets.all(50.0),
-    );
+    resWidget = Padding(padding: EdgeInsets.all(50.0));
     focus.addListener(() => setState(() => _valik = Valik.Enda_oma));
     super.initState();
   }
@@ -36,22 +35,25 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     bodyList = List.generate(
       Valik.values.length,
-      (index) => RadioListTile<Valik>(
-        title: Row(
-          children: [
-            Text(Valik.values[index].toString().replaceFirst("Valik.", "").replaceAll("_", " ")),
-            Spacer(),
-            Text(index != 3 ? getData(Valik.values[index]) : ""),
-          ],
-        ),
-        value: Valik.values[index],
-        groupValue: _valik,
-        onChanged: (Valik value) {
-          setState(() {
-            _valik = Valik.values[index];
-          });
-        },
-      ),
+          (index) =>
+          RadioListTile<Valik>(
+            title: Row(
+              children: [
+                Text(Valik.values[index].toString().replaceFirst("Valik.", "").replaceAll("_", " ")),
+                Spacer(),
+                Text(index != 3 ? getData(Valik.values[index]) : ""),
+              ],
+            ),
+            value: Valik.values[index],
+            groupValue: _valik,
+            onChanged: (Valik value) {
+              setState(() {
+                _valik = Valik.values[index];
+                for (int i = 0; i < isSelected.length; i++)
+                  if (isSelected[i]) runAlgo(Algo.values[i]);
+              });
+            },
+          ),
     );
     bodyList.add(Padding(
       padding: const EdgeInsets.all(30.0),
@@ -73,32 +75,35 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(children: bodyList),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  Algo.values.length,
-                  (index) => Flexible(
-                    flex: 1,
-                    child: RaisedButton(
-                      onPressed: () {
-                        try{
+              LayoutBuilder(
+                builder: (context, constraints) =>
+                    ToggleButtons(
+                      isSelected: isSelected,
+                      onPressed: (int index) {
+                        if (isSelected[index]) {
+                          setState(() {
+                            isSelected[index] = false;
+                            resWidget = Padding(padding: EdgeInsets.all(50.0));
+                          });
+                        } else {
                           runAlgo(Algo.values[index]);
-                          setState(() {
-                            error = false;
-                          });
-                        } on Exception catch(e){
-                          print(e);
-                          setState(() {
-                            error = true;
-                          });
                         }
                       },
-                      child: Text(Algo.values[index].toString().replaceFirst("Algo.", "")),
+                      children: List.generate(
+                        Algo.values.length,
+                            (index) =>
+                            Container(
+                              width: (constraints.maxWidth - 100) / Algo.values.length,
+                              alignment: Alignment.center,
+                              child: Text(
+                                Algo.values[index].toString().replaceFirst("Algo.", ""),
+                              ),
+                            ),
+                      ),
                     ),
-                  ),
-                ),
               ),
               resWidget,
             ],
@@ -123,26 +128,43 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void runAlgo(Algo algo) {
+  List<List<num>> cleanInput(){
     var rawInput = getData(_valik).split(";");
-    List<List<num>> processes = new List.generate(rawInput.length, (i) {
+    return List.generate(rawInput.length, (i) {
       var str = rawInput[i].split(",");
       return [int.parse(str[0]), int.parse(str[1])];
     });
+  }
 
-    switch (algo) {
-      case Algo.FCFS:
-        FCFS(processes);
-        break;
-      case Algo.SJF:
-        SJF(processes);
-        break;
-      case Algo.RR3:
-        // TODO: Handle this case.
-        break;
-      case Algo.TL_FCFS:
-        // TODO: Handle this case.
-        break;
+  void runAlgo(Algo algo) {
+    try {
+      List<List<num>> processes = cleanInput();
+      switch (algo) {
+        case Algo.FCFS:
+          FCFS(processes);
+          break;
+        case Algo.SJF:
+          SJF(processes);
+          break;
+        case Algo.RR3:
+          RR(processes, 3);
+          break;
+        case Algo.TL_FCFS:
+          TL_FCFS(processes);
+          break;
+      }
+
+      setState(() {
+        error = false;
+        for (int i = 0; i < isSelected.length; i++) {
+          isSelected[i] = i == algo.index;
+        }
+      });
+    } on Exception catch (e) {
+      print(e);
+      setState(() {
+        error = true;
+      });
     }
   }
 
@@ -186,7 +208,7 @@ class _MyAppState extends State<MyApp> {
     while (true) {
       if (currentProcess[1] == 0) {
         resList.add(ProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
-        print("Finished P${currentProcess[2] + 1}, saving P${currentProcess[2] + 1} work ($currentWork) in bar");
+        print("Finished P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
         currentWork = 0;
         if (backlog.isNotEmpty) {
           currentProcess = backlog.removeLast();
@@ -206,7 +228,7 @@ class _MyAppState extends State<MyApp> {
               resList
                   .add(ProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
             }
-            print("\tNew process is shorter than existing, saving P${currentProcess[2] + 1} work ($currentWork) in bar and starting P${count + 1}");
+            print("\tNew process is shorter than existing, saving work ($currentWork) in bar and starting P${count + 1}");
             currentWork = 0;
 
             if (currentProcess[2] != -1) backlog.add(currentProcess);
@@ -230,7 +252,153 @@ class _MyAppState extends State<MyApp> {
       totalTime++;
       backlog.forEach((element) => totalWait++);
       print("#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
-      if (totalTime > 60) break;
+    }
+
+    setState(() {
+      resWidget = ResultContainer(totalWait / processes.length, resList);
+    });
+  }
+
+  void RR(List<List<num>> processes, int n) {
+    print("Starting RR$n with $processes");
+    num totalTime = 0;
+    num count = 0;
+    num totalWait = 0;
+    List<ProcessBar> resList = new List();
+    List<Color> colors = List.generate(processes.length, (index) => Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+    var delayProcess = [0, double.infinity, -1];
+
+    List<num> currentProcess = delayProcess;
+    num currentWork = 0;
+    Queue<List<num>> backlog = new Queue();
+    Queue<List<num>> queue = new Queue();
+    while (true) {
+      if (count <= processes.length - 1) {
+        while (processes[count][0] <= totalTime) {
+          print("Queueing process P${count + 1} ${processes[count]} at time $totalTime");
+          processes[count].add(count);
+          queue.add(processes[count]);
+          count++;
+          if (count > processes.length - 1) break;
+        }
+      }
+
+      if (currentProcess[1] == 0 || currentWork == n || (currentProcess[2] == -1 && (backlog.isNotEmpty || queue.isNotEmpty))) {
+        if (currentWork != 0)
+          resList.add(ProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+        print("Stopping P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
+        if (currentProcess[1] != 0 && currentProcess[2] != -1) {
+          print("\tBacklogged P${currentProcess[2] + 1}");
+          backlog.add(currentProcess);
+        } else {
+          print("\tFinished P${currentProcess[2] + 1}");
+        }
+
+        currentWork = 0;
+        if (queue.isNotEmpty) {
+          print("\tStarting P${queue.last[2] + 1} from queue $queue");
+          currentProcess = queue.removeFirst();
+        } else if (backlog.isNotEmpty) {
+          print("\tStarting P${backlog.last[2] + 1} from backlog $backlog");
+          currentProcess = backlog.removeFirst();
+        } else {
+          if (count >= processes.length) break;
+          print("\tQueue, is empty, starting delay task");
+          currentProcess = delayProcess;
+        }
+      }
+
+      currentProcess[1]--;
+      currentWork++;
+      totalTime++;
+      backlog.forEach((element) => totalWait++);
+      print("#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
+    }
+
+    setState(() {
+      resWidget = ResultContainer(totalWait / processes.length, resList);
+    });
+  }
+
+  void TL_FCFS(List<List<num>> processes) {
+    print("Starting TL_FCFS with $processes");
+    num totalTime = 0;
+    num count = 0;
+    num totalWait = 0;
+    List<ProcessBar> resList = new List();
+    List<Color> colors = List.generate(processes.length, (index) => Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+    var delayProcess = [0, double.infinity, -1];
+
+    List<num> currentProcess = delayProcess;
+    num currentWork = 0;
+    Queue<List<num>> hQueue = new Queue();
+    Queue<List<num>> lQueue = new Queue();
+    bool processingLow = false;
+    while (true) {
+      if (currentProcess[1] == 0) {
+        resList.add(ProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+        print("Finished P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
+        currentWork = 0;
+        if (hQueue.isNotEmpty) {
+          processingLow = false;
+          currentProcess = hQueue.removeLast();
+          print("\tStarting P${currentProcess[2] + 1} from high-priority queue");
+        } else if (lQueue.isNotEmpty) {
+          processingLow = true;
+          currentProcess = lQueue.removeLast();
+          print("\tStarting P${currentProcess[2] + 1} from low-priority queue");
+        } else {
+          processingLow = true;
+          print("\tStarting delay task");
+          currentProcess = delayProcess;
+        }
+      }
+
+      if (count <= processes.length - 1) {
+        while (processes[count][0] <= totalTime) {
+          print("Queueing process P${count + 1} ${processes[count]} at time $totalTime");
+          processes[count].add(count);
+          if ((processes[count][1] <= 6 && processingLow) || currentProcess[2] == -1) {
+            if (currentWork != 0) {
+              resList
+                  .add(ProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+            }
+            print("\tNew process is higher priority than P${currentProcess[2] + 1}, saving work ($currentWork) in bar and starting P${count + 1}");
+            currentWork = 0;
+
+            if (currentProcess[2] != -1) {
+              if (processingLow) {
+                print("\tAdding P${count + 1} back to low-priority queue");
+                lQueue.add(currentProcess);
+              } else {
+                print("\tAdding P${count + 1} back to high-priority queue");
+                hQueue.add(currentProcess);
+              }
+            }
+
+            currentProcess = processes[count];
+          } else if (processes[count][1] <= 6) {
+            print("\tAdding P${count + 1} to high-priority queue");
+            hQueue.add(processes[count]);
+          } else {
+            print("\tAdding P${count + 1} to low-priority queue");
+            lQueue.add(processes[count]);
+          }
+          count++;
+          if (count > processes.length - 1) break;
+        }
+      }
+
+      if (currentProcess[2] == -1 && count >= processes.length) {
+        print("Finished TL_FCFS");
+        break;
+      }
+
+      currentProcess[1]--;
+      currentWork++;
+      totalTime++;
+      hQueue.forEach((element) => totalWait++);
+      print("#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, hQueue: $hQueue, lQueue: $lQueue");
     }
 
     setState(() {
@@ -255,8 +423,11 @@ class ResultContainer extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          Row(
-            children: list,
+          SizedBox(
+            height: 50,
+            child: Row(
+              children: list,
+            ),
           )
         ],
       ),
