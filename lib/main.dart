@@ -27,42 +27,54 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     resWidget = Padding(padding: EdgeInsets.all(50.0));
-    focus.addListener(() => setState(() => _valik = Valik.Enda_oma));
+    focus.addListener(() {
+      if (focus.hasFocus)
+      setState(() => _valik = Valik.Enda_oma);
+    });
     super.initState();
+  }
+
+
+  @override
+  void dispose() {
+    focus.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     bodyList = List.generate(
       Valik.values.length,
-          (index) =>
-          RadioListTile<Valik>(
-            title: Row(
-              children: [
-                Text(Valik.values[index].toString().replaceFirst("Valik.", "").replaceAll("_", " ")),
-                Spacer(),
-                Text(index != 3 ? getData(Valik.values[index]) : ""),
-              ],
-            ),
-            value: Valik.values[index],
-            groupValue: _valik,
-            onChanged: (Valik value) {
-              setState(() {
-                _valik = Valik.values[index];
-                for (int i = 0; i < isSelected.length; i++)
-                  if (isSelected[i]) runAlgo(Algo.values[i]);
-              });
-            },
-          ),
+      (index) => RadioListTile<Valik>(
+        title: Row(
+          children: [
+            Text(Valik.values[index].toString().replaceFirst("Valik.", "").replaceAll("_", " ")),
+            Spacer(),
+            Text(index != 3 ? getData(Valik.values[index]) : ""),
+          ],
+        ),
+        value: Valik.values[index],
+        groupValue: _valik,
+        onChanged: (Valik value) {
+          setState(() {
+            _valik = value;
+            if (value != Valik.Enda_oma) focus.unfocus();
+            else focus.requestFocus();
+            for (int i = 0; i < isSelected.length; i++) if (isSelected[i]) runAlgo(Algo.values[i]);
+          });
+        },
+      ),
     );
-    bodyList.add(Padding(
-      padding: const EdgeInsets.all(30.0),
-      child: TextField(
-        focusNode: focus,
-        controller: _controller,
-        decoration: InputDecoration(
-          hintText: "Sisesta järjend kujul 1,10;4,2;12,3;13,2",
-          errorText: error ? "Vigane järjend" : null,
+    bodyList.add(Flexible(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
+        child: TextField(
+          focusNode: focus,
+          controller: _controller,
+          decoration: InputDecoration(
+            hintText: "Sisesta järjend kujul 1,10;4,2;12,3;13,2",
+            errorText: error ? "Vigane järjend" : null,
+          ),
         ),
       ),
     ));
@@ -73,40 +85,116 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: Text('Protsessoriaja haldus'),
         ),
-        body: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(children: bodyList),
-              LayoutBuilder(
-                builder: (context, constraints) =>
-                    ToggleButtons(
-                      isSelected: isSelected,
-                      onPressed: (int index) {
-                        if (isSelected[index]) {
-                          setState(() {
-                            isSelected[index] = false;
-                            resWidget = Padding(padding: EdgeInsets.all(50.0));
-                          });
-                        } else {
-                          runAlgo(Algo.values[index]);
-                        }
-                      },
-                      children: List.generate(
-                        Algo.values.length,
-                            (index) =>
-                            Container(
-                              width: (constraints.maxWidth - 100) / Algo.values.length,
-                              alignment: Alignment.center,
-                              child: Text(
-                                Algo.values[index].toString().replaceFirst("Algo.", ""),
-                              ),
+        body: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints.tightFor(width: max(700, constraints.maxWidth)),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Column(children: bodyList),
+                          ),
+                          Flexible(
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text("Protsesside tabel", style: TextStyle(fontSize: 18),),
+                                ),
+                                Flexible(
+                                  child: Builder(
+                                    builder: (context) {
+                                      List<List<num>> processes;
+                                      try {
+                                        processes = cleanInput();
+                                      } on Exception {
+                                        return Container(
+                                          color: Colors.grey,
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            "Sisesta järjend",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        );
+                                      }
+                                      return Table(
+                                        border: TableBorder.all(),
+                                        children: List.generate((processes.length + 1), (index) {
+                                          if (index == 0) {
+                                            return TableRow(children: [
+                                              TableCellPadded(
+                                                child: Text("ID"),
+                                              ),
+                                              TableCellPadded(
+                                                child: Text("Saabumise aeg"),
+                                              ),
+                                              TableCellPadded(
+                                                child: Text("Protsessoriaja soov"),
+                                              ),
+                                            ]);
+                                          } else {
+                                            return TableRow(
+                                              children: List.generate(
+                                                3,
+                                                (i) => TableCellPadded(
+                                                  child: Text(i == 0 ? "P$index" : processes[index - 1][i - 1].toString()),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                        ],
                       ),
                     ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    LayoutBuilder(
+                      builder: (context, constraints) => ToggleButtons(
+                        isSelected: isSelected,
+                        onPressed: (int index) {
+                          if (isSelected[index]) {
+                            setState(() {
+                              isSelected[index] = false;
+                              resWidget = Padding(padding: EdgeInsets.all(50.0));
+                            });
+                          } else {
+                            runAlgo(Algo.values[index]);
+                          }
+                        },
+                        children: List.generate(
+                          Algo.values.length,
+                          (index) => Container(
+                            width: (constraints.maxWidth - 100) / Algo.values.length,
+                            alignment: Alignment.center,
+                            child: Text(
+                              Algo.values[index].toString().replaceFirst("Algo.", ""),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    resWidget,
+                  ],
+                ),
               ),
-              resWidget,
-            ],
+            ),
           ),
         ),
       ),
@@ -128,7 +216,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  List<List<num>> cleanInput(){
+  List<List<num>> cleanInput() {
     var rawInput = getData(_valik).split(";");
     return List.generate(rawInput.length, (i) {
       var str = rawInput[i].split(",");
@@ -312,6 +400,7 @@ class _MyAppState extends State<MyApp> {
       currentWork++;
       totalTime++;
       backlog.forEach((element) => totalWait++);
+      queue.forEach((element) => totalWait++);
       print("#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
     }
 
@@ -398,6 +487,7 @@ class _MyAppState extends State<MyApp> {
       currentWork++;
       totalTime++;
       hQueue.forEach((element) => totalWait++);
+      lQueue.forEach((element) => totalWait++);
       print("#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, hQueue: $hQueue, lQueue: $lQueue");
     }
 
@@ -479,4 +569,15 @@ class ProcessBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class TableCellPadded extends StatelessWidget {
+  final EdgeInsets padding;
+  final Widget child;
+  final TableCellVerticalAlignment verticalAlignment;
+
+  const TableCellPadded({Key key, this.padding, @required this.child, this.verticalAlignment}) : super(key: key);
+
+  @override
+  TableCell build(BuildContext context) => TableCell(verticalAlignment: verticalAlignment, child: Padding(padding: padding ?? EdgeInsets.all(5.0), child: child));
 }
