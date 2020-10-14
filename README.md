@@ -5,4 +5,4 @@ This is a Flutter app for visualising common CPU scheduling algorithms (First Co
 
 The app is deployed online at: https://cpu-scheduling.herokuapp.com
 
-The app can be downloaded for Windows from the Releases page.
+The app can be downloaded for Windows from [Releases](https://github.com/markusaksli/scheduling/releases/latest)
