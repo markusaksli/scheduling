@@ -191,7 +191,7 @@ class _AlgoAppState extends State<AlgoApp> {
     List<Widget> inputList = List.generate(
       DataChoice.values.length,
       (index) => RadioListTile<DataChoice>(
-        title: Text(index != 3 ? getData(DataChoice.values[index]) : ""),
+        title: Text(index != 3 ? getData(DataChoice.values[index]) : "Create your own"),
         value: DataChoice.values[index],
         activeColor: Colors.orangeAccent,
         groupValue: dataChoice,
