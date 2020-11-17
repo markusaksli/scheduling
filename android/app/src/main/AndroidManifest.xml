@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.protsessoriaja_haldus">
+    package="com.example.scheduling">
    <application
-        android:label="protsessoriaja_haldus"
+        android:label="scheduling"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

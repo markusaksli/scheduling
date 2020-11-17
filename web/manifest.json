@@ -1,11 +1,11 @@
 {
-    "name": "protsessoriaja_haldus",
-    "short_name": "protsessoriaja_haldus",
+    "name": "scheduling",
+    "short_name": "scheduling",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Simulaator protsessoriaja planeerimise algoritmide töö visualiseerimiseks.",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

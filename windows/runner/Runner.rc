@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "Simulaator protsessoriaja planeerimise algoritmide töö visualiseerimiseks." "\0"
+            VALUE "FileDescription", "A new Flutter project." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "protsessoriaja_haldus" "\0"
+            VALUE "InternalName", "scheduling" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2020 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "protsessoriaja_haldus.exe" "\0"
-            VALUE "ProductName", "protsessoriaja_haldus" "\0"
+            VALUE "OriginalFilename", "scheduling.exe" "\0"
+            VALUE "ProductName", "scheduling" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

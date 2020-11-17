@@ -1,4 +1,4 @@
-package com.example.protsessoriaja_haldus
+package com.example.scheduling
 
 import io.flutter.embedding.android.FlutterActivity
 

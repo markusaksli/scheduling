@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(protsessoriaja_haldus LANGUAGES CXX)
+project(scheduling LANGUAGES CXX)
 
-set(BINARY_NAME "protsessoriaja_haldus")
+set(BINARY_NAME "scheduling")
 
 cmake_policy(SET CMP0063 NEW)
 
