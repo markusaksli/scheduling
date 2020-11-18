@@ -49,7 +49,7 @@ class _AlgoAppState extends State<AlgoApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Resource management',
+      title: 'Resource Scheduling',
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.orange,
@@ -63,7 +63,7 @@ class _AlgoAppState extends State<AlgoApp> {
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Resource management'),
+          title: Text('${component.toString().split(".")[1]} Scheduling'),
         ),
         drawer: Drawer(
           child: ListView(
