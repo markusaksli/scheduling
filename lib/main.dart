@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scheduling/cpu.dart';
+import 'package:scheduling/memory.dart';
 
 void main() => runApp(AlgoApp());
 
@@ -20,7 +21,7 @@ class _AlgoAppState extends State<AlgoApp> {
   DataChoice dataChoice = DataChoice.First;
   Component component = Component.CPU;
   TextEditingController _controller;
-  List<bool> selectedAlgo = List.generate(4, (index) => false);
+  List<bool> selectedAlgo;
   bool hasResult = false;
   bool error = false;
   String choiceText = "";
@@ -30,6 +31,7 @@ class _AlgoAppState extends State<AlgoApp> {
 
   @override
   void initState() {
+    setSelectedAlgoList();
     _controller = TextEditingController(text: choiceText);
     resWidget = Padding(padding: EdgeInsets.all(50.0));
     focus.addListener(() {
@@ -86,37 +88,52 @@ class _AlgoAppState extends State<AlgoApp> {
                             child: Column(children: generateDataInputList()),
                           ),
                           Flexible(
-                            child: Column(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    "Process table",
-                                    style: TextStyle(fontSize: 18),
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(0, 0, 20.0, 0),
+                              child: Column(
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text(
+                                      "Process table",
+                                      style: TextStyle(fontSize: 18),
+                                    ),
                                   ),
-                                ),
-                                Flexible(
-                                  child: Builder(
-                                    builder: (context) {
-                                      List<List<num>> processes;
-                                      if (choiceText.isEmpty && dataChoice == DataChoice.Own) {
-                                        return const TableErrorContainer(
-                                          text: "Enter a process array",
-                                        );
-                                      }
-                                      try {
-                                        processes = cleanInput();
-                                        processes[processes.length - 1][1];
-                                      } catch (e) {
-                                        return const TableErrorContainer(
-                                          text: "Faulty process array",
-                                        );
-                                      }
-                                      return ProcessTable(processes: processes);
-                                    },
+                                  Flexible(
+                                    child: Builder(
+                                      builder: (context) {
+                                        List<List<num>> processes;
+                                        if (choiceText.isEmpty && dataChoice == DataChoice.Own) {
+                                          return const TableErrorContainer(
+                                            text: "Enter a process array",
+                                          );
+                                        }
+                                        try {
+                                          processes = cleanInput();
+                                          processes[processes.length - 1][1];
+                                        } catch (e) {
+                                          return const TableErrorContainer(
+                                            text: "Faulty process array",
+                                          );
+                                        }
+                                        String firstProperty;
+                                        String secondProperty;
+                                        Function generateId;
+                                        switch (component) {
+                                          case Component.CPU:
+                                            return ProcessTable.fromList(processes, "Arrival time", "Length", (int index) => "P$index");
+                                          case Component.Memory:
+                                            return ProcessTable.fromList(processes, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
+                                          default:
+                                            return TableErrorContainer(
+                                              text: "No component selected",
+                                            );
+                                        }
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -146,15 +163,7 @@ class _AlgoAppState extends State<AlgoApp> {
   }
 
   ToggleButtons buildAlgoToggle(BoxConstraints constraints) {
-    List algoEnum;
-    switch (component) {
-      case Component.CPU:
-        algoEnum = CpuAlgo.values;
-        break;
-      case Component.Memory:
-        // TODO: Handle this case.
-        break;
-    }
+    List algoEnum = getComponentAlgoEnum();
     return ToggleButtons(
       selectedColor: Colors.orange,
       selectedBorderColor: Colors.orange[200],
@@ -176,7 +185,7 @@ class _AlgoAppState extends State<AlgoApp> {
       children: List.generate(
         algoEnum.length,
         (index) => Container(
-          width: (constraints.maxWidth - 100) / algoEnum.length,
+          width: (constraints.maxWidth - 40) / algoEnum.length,
           alignment: Alignment.center,
           child: Text(
             algoEnum[index].toString().split(".")[1],
@@ -252,24 +261,55 @@ class _AlgoAppState extends State<AlgoApp> {
         onChanged: (Component value) {
           setState(() {
             component = value;
-            for (int i = 0; i < selectedAlgo.length; i++) if (selectedAlgo[i]) runAlgo(i);
+            resWidget = Padding(
+              padding: EdgeInsets.all(50.0),
+            );
+            setSelectedAlgoList();
           });
         },
+      ),
+    );
+    componentList.insert(
+      0,
+      DrawerHeader(
+        decoration: BoxDecoration(color: Colors.orange),
+        child: Text(
+          "Select a component",
+          style: TextStyle(fontSize: 24, color: Colors.black),
+        ),
       ),
     );
     return componentList;
   }
 
+  List getComponentAlgoEnum() {
+    List algoEnum;
+    switch (component) {
+      case Component.CPU:
+        algoEnum = CpuAlgo.values;
+        break;
+      case Component.Memory:
+        algoEnum = MemoryAlgo.values;
+        break;
+    }
+    return algoEnum;
+  }
+
+  void setSelectedAlgoList() {
+    setState(() {
+      selectedAlgo = List.generate(getComponentAlgoEnum().length, (index) => false);
+    });
+  }
+
   String getData(DataChoice valik) {
-    switch (valik) {
-      case DataChoice.First:
-        return "0,5;6,9;6,5;15,10";
-      case DataChoice.Second:
-        return "0,2;0,4;12,4;15,5;21,10";
-      case DataChoice.Third:
-        return "5,6;6,9;11,3;12,7";
-      case DataChoice.Own:
-        return choiceText;
+    if (valik == DataChoice.Own) {
+      return choiceText;
+    }
+    switch (component) {
+      case Component.CPU:
+        return getCpuData(valik);
+      case Component.Memory:
+        return getMemoryData(valik);
       default:
         return "";
     }
@@ -284,15 +324,15 @@ class _AlgoAppState extends State<AlgoApp> {
   }
 
   void runAlgo(int algoIndex) {
+    StringBuffer log = new StringBuffer();
     try {
-      StringBuffer log = new StringBuffer();
       Widget algoResult;
       switch (component) {
         case Component.CPU:
           algoResult = runCpuAlgo(CpuAlgo.values[algoIndex], log, cleanInput());
           break;
         case Component.Memory:
-          // TODO: Handle this case.
+          algoResult = runMemoryAlgo(MemoryAlgo.values[algoIndex], log, cleanInput());
           break;
       }
       setState(() {
@@ -302,12 +342,11 @@ class _AlgoAppState extends State<AlgoApp> {
           selectedAlgo[i] = i == algoIndex;
         }
       });
-    } catch (e) {
+    } catch (e, s) {
       setState(() {
+        print("$e\n$s");
         error = true;
-        resWidget = const Padding(
-          padding: EdgeInsets.all(50.0),
-        );
+        resWidget = AlgoResult(Container(), log);
       });
     }
   }
@@ -343,16 +382,54 @@ class TableCellPadded extends StatelessWidget {
 }
 
 class ProcessTable extends StatelessWidget {
-  const ProcessTable({
-    Key key,
-    @required this.processes,
-  }) : super(key: key);
-
-  final List<List<num>> processes;
+  final List<TableRow> rows;
   static const TextStyle heading = TextStyle(
     fontWeight: FontWeight.bold,
     color: Colors.orangeAccent,
   );
+
+  static ProcessTable fromList(List<List<num>> processes, String firstProperty, String secondProperty, Function generateID) {
+    List<TableRow> rowList = List.generate(
+      processes.length,
+      (index) {
+        List<TableCellPadded> cellList = List.generate(processes[index].length, (secondIndex) => TableCellPadded(child: Text(processes[index][secondIndex].toString())));
+        cellList.insert(0, TableCellPadded(child: Text(generateID(index))));
+        return TableRow(
+          children: cellList,
+        );
+      },
+    );
+    rowList.insert(
+        0,
+        TableRow(
+          children: [
+            TableCellPadded(
+              child: Text(
+                "ID",
+                style: heading,
+              ),
+            ),
+            TableCellPadded(
+              child: Text(
+                firstProperty,
+                style: heading,
+              ),
+            ),
+            TableCellPadded(
+              child: Text(
+                secondProperty,
+                style: heading,
+              ),
+            ),
+          ],
+        ));
+    return ProcessTable(rows: rowList);
+  }
+
+  const ProcessTable({
+    Key key,
+    @required this.rows,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -360,41 +437,7 @@ class ProcessTable extends StatelessWidget {
       color: Colors.grey[600],
       child: Table(
         border: TableBorder.all(),
-        children: List.generate((processes.length + 1), (index) {
-          if (index == 0) {
-            return const TableRow(
-              children: [
-                TableCellPadded(
-                  child: Text(
-                    "ID",
-                    style: heading,
-                  ),
-                ),
-                TableCellPadded(
-                  child: Text(
-                    "Arrival time",
-                    style: heading,
-                  ),
-                ),
-                TableCellPadded(
-                  child: Text(
-                    "Requested resource amount",
-                    style: heading,
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return TableRow(
-              children: List.generate(
-                3,
-                (i) => TableCellPadded(
-                  child: Text(i == 0 ? "P$index" : processes[index - 1][i - 1].toString()),
-                ),
-              ),
-            );
-          }
-        }),
+        children: rows,
       ),
     );
   }
@@ -409,7 +452,7 @@ class AlgoResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(50.0),
+      padding: const EdgeInsets.all(20.0),
       child: Container(
         padding: EdgeInsets.all(10.0),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(10.0), color: Colors.grey[800], boxShadow: [BoxShadow(color: Colors.grey[900], blurRadius: 15)]),

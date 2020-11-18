@@ -5,7 +5,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'main.dart';
+
 enum CpuAlgo { FCFS, SJF, RR3, TL_FCFS }
+
+String getCpuData(DataChoice valik) {
+  switch (valik) {
+    case DataChoice.First:
+      return "0,5;6,9;6,5;15,10";
+    case DataChoice.Second:
+      return "0,2;0,4;12,4;15,5;21,10";
+    case DataChoice.Third:
+      return "5,6;6,9;11,3;12,7";
+    default:
+      return "";
+  }
+}
 
 Widget runCpuAlgo(CpuAlgo algo, StringBuffer log, List<List<num>> processes) {
   switch (algo) {
@@ -45,7 +60,7 @@ Widget FCFS(List<List<num>> processes, StringBuffer log) {
     count += 1;
   }
 
-  return CpuResult(totalWait / processes.length, resList, log);
+  return CpuResult(totalWait / processes.length, resList);
 }
 
 Widget SJF(List<List<num>> processes, StringBuffer log) {
@@ -109,7 +124,7 @@ Widget SJF(List<List<num>> processes, StringBuffer log) {
     log.write("\n#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
   }
 
-  return CpuResult(totalWait / processes.length, resList, log);
+  return CpuResult(totalWait / processes.length, resList);
 }
 
 Widget RR(List<List<num>> processes, StringBuffer log, int n) {
@@ -169,7 +184,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
     log.write("\n#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
   }
 
-  return CpuResult(totalWait / processes.length, resList, log);
+  return CpuResult(totalWait / processes.length, resList);
 }
 
 Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
@@ -254,15 +269,14 @@ Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
     log.write("\n#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, hQueue: $hQueue, lQueue: $lQueue");
   }
 
-  return CpuResult(totalWait / processes.length, resList, log);
+  return CpuResult(totalWait / processes.length, resList);
 }
 
 class CpuResult extends StatelessWidget {
   final double avgWait;
-  final List<Widget> list;
-  final StringBuffer log;
+  final List<CpuProcessBar> list;
 
-  const CpuResult(this.avgWait, this.list, this.log);
+  const CpuResult(this.avgWait, this.list);
 
   @override
   Widget build(BuildContext context) {
