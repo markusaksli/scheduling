@@ -125,7 +125,7 @@ class Memory {
 }
 
 Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memory, @required StringBuffer log, bool reverseChunkPriority = false, bool sortByChunkSize = false, bool random = false}) {
-  log.write("Starting ${random ? sortByChunkSize ? reverseChunkPriority ? "worst-fit" : "best-fit" : reverseChunkPriority ? "last-fit" : "first-fit" : "random-fit"} with $processes");
+  log.write("Starting ${random ? "random-fit" : sortByChunkSize ? reverseChunkPriority ? "worst-fit" : "best-fit" : reverseChunkPriority ? "last-fit" : "first-fit"} with $processes");
   List<TableRow> resultList = new List();
   for (var process in processes) {
     var chunks = memory.getFreeChunks();
@@ -183,12 +183,14 @@ class MemoryResult extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Table(
-      children: list,
-      columnWidths: {
-        0: FixedColumnWidth(50),
-        1: IntrinsicColumnWidth(),
-      },
+    return IntrinsicHeight(
+      child: Table(
+        children: list,
+        columnWidths: {
+          0: FixedColumnWidth(50),
+          1: IntrinsicColumnWidth(),
+        },
+      ),
     );
   }
 }
