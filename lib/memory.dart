@@ -164,6 +164,7 @@ Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memo
     if (!added) {
       log.write("\n!---Could not add process $process---!");
       resultList.add(rowFromMemory(memory, process.toString(), true, true));
+      log.write("\nFailed to complete ${random ? "random-fit" : sortByChunkSize ? reverseChunkPriority ? "worst-fit" : "best-fit" : reverseChunkPriority ? "last-fit" : "first-fit"}");
       return resultFromList(resultList);
     }
   }
@@ -172,7 +173,7 @@ Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memo
     memory.tick();
   }
   resultList.add(rowFromMemory(memory, "-", true, false));
-  log.write("\nFinished first-fit");
+  log.write("\nFinished ${random ? "random-fit" : sortByChunkSize ? reverseChunkPriority ? "worst-fit" : "best-fit" : reverseChunkPriority ? "last-fit" : "first-fit"} successfully");
   return resultFromList(resultList);
 }
 

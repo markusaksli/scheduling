@@ -60,6 +60,7 @@ Widget FCFS(List<List<num>> processes, StringBuffer log) {
     count += 1;
   }
 
+  log.write("\nFinished FCFS");
   return CpuResult(totalWait / processes.length, resList);
 }
 
@@ -183,7 +184,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
     queue.forEach((element) => totalWait++);
     log.write("\n#######P${currentProcess[2] + 1} $currentProcess, currentWork: $currentWork, time: $totalTime, totalWait: $totalWait, count $count, backlog: $backlog");
   }
-
+  log.write("\nFinished RR$n");
   return CpuResult(totalWait / processes.length, resList);
 }
 
