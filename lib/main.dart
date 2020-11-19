@@ -121,7 +121,7 @@ class _AlgoAppState extends State<AlgoApp> {
                                         Function generateId;
                                         switch (component) {
                                           case Component.CPU:
-                                            return ProcessTable.fromList(processes, "Arrival time", "Length", (int index) => "P$index");
+                                            return ProcessTable.fromList(processes, "Arrival time", "Length", (int index) => "P${index + 1}");
                                           case Component.Memory:
                                             return ProcessTable.fromList(processes, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
                                           default:
