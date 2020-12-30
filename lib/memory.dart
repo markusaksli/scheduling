@@ -8,6 +8,8 @@ import 'main.dart';
 
 enum MemoryAlgo { First_Fit, Last_Fit, Best_Fit, Worst_Fit, Random_Fit }
 
+const int MEMORY_SIZE = 50;
+
 String getMemoryData(DataChoice valik) {
   switch (valik) {
     case DataChoice.First:
@@ -54,7 +56,8 @@ class MemoryProcess {
     this.name = name;
     size = request[0];
     time = request[1];
-    color = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
+    //TODO: look at making this consistent
+    color = Color((Random(name.hashCode).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
   }
 
   void setReg(regStart, regEnd) {
@@ -73,7 +76,7 @@ class MemoryProcess {
 }
 
 class Memory {
-  final List<bool> regs = List.generate(50, (index) => true);
+  final List<bool> regs = List.generate(MEMORY_SIZE, (index) => true);
   final StringBuffer log;
   num time = 1;
   List<MemoryProcess> processes = new List();
@@ -81,7 +84,7 @@ class Memory {
   Memory(this.log);
 
   List<List<num>> getFreeChunks() {
-    List<List<num>> chunks = new List();
+    List<List<num>> chunks = [];
     for (var i = 0; i < regs.length; i++) {
       if (regs[i]) {
         List<num> chunk = [i];
@@ -132,17 +135,16 @@ Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memo
     if (sortByChunkSize & chunks.isNotEmpty) {
       chunks.sort((List<num> a, List<num> b) {
         num compare = (a[1] - a[0]).compareTo(b[1] - b[0]);
+        if (reverseChunkPriority) {
+          compare *= -1;
+        }
         if (compare == 0) {
-          if (reverseChunkPriority) {
             compare = a[0].compareTo(b[0]);
-          } else {
-            compare = b[0].compareTo(a[0]);
-          }
         }
         return compare;
       });
     }
-    if (reverseChunkPriority) {
+    if(!sortByChunkSize && reverseChunkPriority){
       chunks = chunks.reversed.toList();
     }
     log.write("\nTrying to add process $process to free chunks $chunks");
@@ -188,7 +190,7 @@ class MemoryResult extends StatelessWidget {
       child: Table(
         children: list,
         columnWidths: {
-          0: FixedColumnWidth(50),
+          0: FixedColumnWidth(MEMORY_SIZE.toDouble()),
           1: IntrinsicColumnWidth(),
         },
       ),
@@ -198,7 +200,7 @@ class MemoryResult extends StatelessWidget {
 
 MemoryResult resultFromList(List<TableRow> list) {
   List<TableCell> headerCellList = List.generate(
-    50,
+    MEMORY_SIZE,
     (index) => TableCell(
       verticalAlignment: TableCellVerticalAlignment.bottom,
       child: Container(
@@ -253,7 +255,7 @@ TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool f
     }
   }
   List<TableCell> cellList = List.generate(
-    50,
+    MEMORY_SIZE,
     (index) => TableCell(
       child: Container(
         color: freeColor,
@@ -289,7 +291,7 @@ TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool f
         child: Container(
           alignment: Alignment.centerLeft,
           child: Text(
-            memory.time.toString(),
+            !failed && finalRow ? '' : memory.time.toString(),
           ),
         ),
       ),
@@ -297,7 +299,7 @@ TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool f
         child: Container(
           alignment: Alignment.center,
           child: Text(
-            addedProcess,
+            !failed && finalRow ? 'Done' : addedProcess,
             maxLines: 1,
             overflow: TextOverflow.fade,
           ),

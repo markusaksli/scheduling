@@ -6,11 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scheduling/cpu.dart';
 import 'package:scheduling/memory.dart';
+import 'package:scheduling/storage.dart';
 
 void main() => runApp(AlgoApp());
 
 enum DataChoice { First, Second, Third, Own }
-enum Component { CPU, Memory }
+enum Component { CPU, Memory, Storage }
 
 class AlgoApp extends StatefulWidget {
   @override
@@ -102,28 +103,31 @@ class _AlgoAppState extends State<AlgoApp> {
                                   Flexible(
                                     child: Builder(
                                       builder: (context) {
-                                        List<List<num>> processes;
+                                        List processes;
                                         if (choiceText.isEmpty && dataChoice == DataChoice.Own) {
                                           return const TableErrorContainer(
                                             text: "Enter a process array",
                                           );
                                         }
                                         try {
-                                          processes = cleanInput();
-                                          processes[processes.length - 1][1];
+                                          if (component == Component.Storage) {
+                                            processes = parseStorageOperations();
+                                          } else {
+                                            processes = parseComputationProcesses();
+                                            processes[processes.length - 1][1];
+                                          }
                                         } catch (e) {
                                           return const TableErrorContainer(
                                             text: "Faulty process array",
                                           );
                                         }
-                                        String firstProperty;
-                                        String secondProperty;
-                                        Function generateId;
                                         switch (component) {
                                           case Component.CPU:
-                                            return ProcessTable.fromList(processes, "Arrival time", "Length", (int index) => "P${index + 1}");
+                                            return ProcessTable.fromProcessList(processes, "Arrival time", "Length", (int index) => "P${index + 1}");
                                           case Component.Memory:
-                                            return ProcessTable.fromList(processes, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
+                                            return ProcessTable.fromProcessList(processes, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
+                                          case Component.Storage:
+                                            return ProcessTable.fromStorageList(processes);
                                           default:
                                             return TableErrorContainer(
                                               text: "No component selected",
@@ -226,7 +230,7 @@ class _AlgoAppState extends State<AlgoApp> {
           focusNode: focus,
           controller: _controller,
           decoration: InputDecoration(
-            hintText: "Enter a process array such as 1,10;4,2;12,3;13,2",
+            hintText: "Enter your own process array",
             errorText: error ? "Faulty process array" : null,
           ),
           onChanged: (s) {
@@ -291,6 +295,9 @@ class _AlgoAppState extends State<AlgoApp> {
       case Component.Memory:
         algoEnum = MemoryAlgo.values;
         break;
+      case Component.Storage:
+        algoEnum = StorageAlgo.values;
+        break;
     }
     return algoEnum;
   }
@@ -301,21 +308,23 @@ class _AlgoAppState extends State<AlgoApp> {
     });
   }
 
-  String getData(DataChoice valik) {
-    if (valik == DataChoice.Own) {
+  String getData(DataChoice choice) {
+    if (choice == DataChoice.Own) {
       return choiceText;
     }
     switch (component) {
       case Component.CPU:
-        return getCpuData(valik);
+        return getCpuData(choice);
       case Component.Memory:
-        return getMemoryData(valik);
+        return getMemoryData(choice);
+      case Component.Storage:
+        return getStorageData(choice);
       default:
         return "";
     }
   }
 
-  List<List<num>> cleanInput() {
+  List<List<num>> parseComputationProcesses() {
     var rawInput = getData(dataChoice).split(";");
     return List.generate(rawInput.length, (i) {
       var str = rawInput[i].split(",");
@@ -323,16 +332,25 @@ class _AlgoAppState extends State<AlgoApp> {
     });
   }
 
+  List<StorageOperation> parseStorageOperations() {
+    var rawInput = getData(dataChoice).split(';');
+    return List.generate(rawInput.length, (index) => StorageOperation(rawInput[index]));
+  }
+
   void runAlgo(int algoIndex) {
     StringBuffer log = new StringBuffer();
+    log.writeln("Parsing input");
     try {
       Widget algoResult;
       switch (component) {
         case Component.CPU:
-          algoResult = runCpuAlgo(CpuAlgo.values[algoIndex], log, cleanInput());
+          algoResult = runCpuAlgo(CpuAlgo.values[algoIndex], log, parseComputationProcesses());
           break;
         case Component.Memory:
-          algoResult = runMemoryAlgo(MemoryAlgo.values[algoIndex], log, cleanInput());
+          algoResult = runMemoryAlgo(MemoryAlgo.values[algoIndex], log, parseComputationProcesses());
+          break;
+        case Component.Storage:
+          algoResult = runStorageAlgo(log, parseStorageOperations());
           break;
       }
       setState(() {
@@ -388,7 +406,7 @@ class ProcessTable extends StatelessWidget {
     color: Colors.orangeAccent,
   );
 
-  static ProcessTable fromList(List<List<num>> processes, String firstProperty, String secondProperty, Function generateID) {
+  static ProcessTable fromProcessList(List<List<num>> processes, String firstProperty, String secondProperty, Function generateID) {
     List<TableRow> rowList = List.generate(
       processes.length,
       (index) {
@@ -403,7 +421,7 @@ class ProcessTable extends StatelessWidget {
         0,
         TableRow(
           children: [
-            TableCellPadded(
+            const TableCellPadded(
               child: Text(
                 "ID",
                 style: heading,
@@ -418,6 +436,59 @@ class ProcessTable extends StatelessWidget {
             TableCellPadded(
               child: Text(
                 secondProperty,
+                style: heading,
+              ),
+            ),
+          ],
+        ));
+    return ProcessTable(rows: rowList);
+  }
+
+  static ProcessTable fromStorageList(List<StorageOperation> operations) {
+    List<TableRow> rowList = List.generate(
+      operations.length,
+      (index) {
+        var operation = operations[index];
+        List<TableCellPadded> cellList = [
+          TableCellPadded(child: Text((index + 1).toString())),
+          TableCellPadded(child: Text(operation.operationType.toString().split('.')[1])),
+          TableCellPadded(child: Text(operation.fileName)),
+        ];
+        if (operation.operationType == StorageOperationType.DELETE) {
+          cellList.add(const TableCellPadded(child: Text('Entire file')));
+        } else {
+          cellList.add(TableCellPadded(child: Text(operation.size.toString())));
+        }
+        return TableRow(
+          children: cellList,
+        );
+      },
+    );
+    rowList.insert(
+        0,
+        TableRow(
+          children: [
+            const TableCellPadded(
+              child: Text(
+                'Step',
+                style: heading,
+              ),
+            ),
+            const TableCellPadded(
+              child: Text(
+                'Operation',
+                style: heading,
+              ),
+            ),
+            const TableCellPadded(
+              child: Text(
+                "Filename",
+                style: heading,
+              ),
+            ),
+            const TableCellPadded(
+              child: Text(
+                'Size',
                 style: heading,
               ),
             ),

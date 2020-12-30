@@ -7,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'main.dart';
 
-enum CpuAlgo { FCFS, SJF, RR3, TL_FCFS }
+enum CpuAlgo { FCFS, SJF, RR, TL_FCFS }
+
+const int RR_WINDOW = 3;
 
 String getCpuData(DataChoice valik) {
   switch (valik) {
@@ -28,8 +30,8 @@ Widget runCpuAlgo(CpuAlgo algo, StringBuffer log, List<List<num>> processes) {
       return FCFS(processes, log);
     case CpuAlgo.SJF:
       return SJF(processes, log);
-    case CpuAlgo.RR3:
-      return RR(processes, log, 3);
+    case CpuAlgo.RR:
+      return RR(processes, log, RR_WINDOW);
     case CpuAlgo.TL_FCFS:
       return TL_FCFS(processes, log);
   }
@@ -48,6 +50,7 @@ Widget FCFS(List<List<num>> processes, StringBuffer log) {
       resList.add(new CpuProcessBar(totalTime, totalTime + time, "", Colors.grey));
       totalTime += time;
     }
+    //TODO: Add generated colors here as well
     var color = Colors.green;
     if (process[0] < totalTime) {
       log.write("\nP$count is waiting for ${totalTime - process[0]}");
@@ -70,7 +73,7 @@ Widget SJF(List<List<num>> processes, StringBuffer log) {
   num count = 0;
   num totalWait = 0;
   List<CpuProcessBar> resList = new List();
-  List<Color> colors = List.generate(processes.length, (index) => Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+  List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
   List<num> currentProcess = delayProcess;
@@ -134,7 +137,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
   num count = 0;
   num totalWait = 0;
   List<CpuProcessBar> resList = new List();
-  List<Color> colors = List.generate(processes.length, (index) => Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+  List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
   List<num> currentProcess = delayProcess;
@@ -194,7 +197,7 @@ Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
   num count = 0;
   num totalWait = 0;
   List<CpuProcessBar> resList = new List();
-  List<Color> colors = List.generate(processes.length, (index) => Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+  List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
   List<num> currentProcess = delayProcess;
