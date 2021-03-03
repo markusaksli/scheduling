@@ -1,7 +1,7 @@
 name: scheduling
 description: Flutter app for visualizing computer resource scheduling algorithms
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 3.0.0
+version: 3.1.0
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
