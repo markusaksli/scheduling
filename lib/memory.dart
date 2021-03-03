@@ -10,7 +10,7 @@ enum MemoryAlgo { First_Fit, Last_Fit, Best_Fit, Worst_Fit, Random_Fit }
 
 const int MEMORY_SIZE = 50;
 
-String getMemoryData(DataChoice valik) {
+String getMemoryData(DataChoice? valik) {
   switch (valik) {
     case DataChoice.First:
       return "1,8;35,4;3,6;4,2;1,4;3,3;1,2;5,1;50,1";
@@ -24,7 +24,7 @@ String getMemoryData(DataChoice valik) {
 }
 
 Widget runMemoryAlgo(MemoryAlgo algo, StringBuffer log, List<List<num>> rawProcesses) {
-  List<MemoryProcess> processes = new List();
+  List<MemoryProcess> processes = [];
   for (int i = 0; i < rawProcesses.length; i++) {
     processes.add(MemoryProcess(rawProcesses[i], MemoryProcess.generateName(i)));
   }
@@ -45,12 +45,12 @@ Widget runMemoryAlgo(MemoryAlgo algo, StringBuffer log, List<List<num>> rawProce
 
 class MemoryProcess {
   static int charA = 'A'.codeUnitAt(0);
-  String name;
-  Color color;
-  num size;
-  num time;
-  num regStart;
-  num regEnd;
+  late String name;
+  Color? color;
+  late num size;
+  late num time;
+  num? regStart;
+  num? regEnd;
 
   MemoryProcess(List<num> request, String name) {
     this.name = name;
@@ -79,7 +79,7 @@ class Memory {
   final List<bool> regs = List.generate(MEMORY_SIZE, (index) => true);
   final StringBuffer log;
   num time = 1;
-  List<MemoryProcess> processes = new List();
+  List<MemoryProcess> processes = [];
 
   Memory(this.log);
 
@@ -102,16 +102,16 @@ class Memory {
   void addProcess(MemoryProcess process) {
     assert(process.regStart != null && process.regEnd != null);
     processes.add(process);
-    for (var i = process.regStart; i <= process.regEnd; i++) regs[i] = false;
+    for (var i = process.regStart!; i <= process.regEnd!; i++) regs[i as int] = false;
   }
 
   void tick() {
     log.write("\n######$time - $processes");
-    List<MemoryProcess> removeList = new List();
+    List<MemoryProcess> removeList = [];
     for (var process in processes) {
       process.time--;
       if (process.time == 0) {
-        for (var i = process.regStart; i <= process.regEnd; i++) regs[i] = true;
+        for (var i = process.regStart!; i <= process.regEnd!; i++) regs[i as int] = true;
         removeList.add(process);
       }
     }
@@ -127,9 +127,9 @@ class Memory {
   }
 }
 
-Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memory, @required StringBuffer log, bool reverseChunkPriority = false, bool sortByChunkSize = false, bool random = false}) {
+Widget memoryFit({required List<MemoryProcess> processes, required Memory memory, required StringBuffer log, bool reverseChunkPriority = false, bool sortByChunkSize = false, bool random = false}) {
   log.write("Starting ${random ? "random-fit" : sortByChunkSize ? reverseChunkPriority ? "worst-fit" : "best-fit" : reverseChunkPriority ? "last-fit" : "first-fit"} with $processes");
-  List<TableRow> resultList = new List();
+  List<TableRow> resultList = [];
   for (var process in processes) {
     var chunks = memory.getFreeChunks();
     if (sortByChunkSize & chunks.isNotEmpty) {
@@ -141,7 +141,7 @@ Widget memoryFit({@required List<MemoryProcess> processes, @required Memory memo
         if (compare == 0) {
             compare = a[0].compareTo(b[0]);
         }
-        return compare;
+        return compare as int;
       });
     }
     if(!sortByChunkSize && reverseChunkPriority){
@@ -246,7 +246,7 @@ MemoryResult resultFromList(List<TableRow> list) {
 }
 
 TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool failed) {
-  Color freeColor = Colors.grey[600];
+  Color? freeColor = Colors.grey[600];
   if (finalRow) {
     if (failed) {
       freeColor = Colors.red;
@@ -267,7 +267,7 @@ TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool f
   if (!finalRow) {
     for (var process in memory.processes) {
       List<TableCell> processCellList = List.generate(
-        process.size,
+        process.size as int,
         (index) => TableCell(
           child: Container(
             alignment: Alignment.center,
@@ -275,13 +275,13 @@ TableRow rowFromMemory(Memory memory, String addedProcess, bool finalRow, bool f
             child: Text(
               process.name,
               style: TextStyle(
-                color: process.color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                color: process.color!.computeLuminance() > 0.5 ? Colors.black : Colors.white,
               ),
             ),
           ),
         ),
       );
-      cellList.replaceRange(process.regStart, process.regEnd + 1, processCellList);
+      cellList.replaceRange(process.regStart as int, process.regEnd! + 1 as int, processCellList);
     }
   }
   cellList.insertAll(

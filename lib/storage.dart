@@ -12,7 +12,7 @@ enum StorageOperationType { CREATE, ADD, DELETE }
 
 const int DRIVE_SIZE = 48;
 
-String getStorageData(DataChoice valik) {
+String getStorageData(DataChoice? valik) {
   switch (valik) {
     case DataChoice.First:
       return "A,2;B,3;A,-;C,4;B,+3;D,5;E,15;C,-;F,5";
@@ -57,12 +57,12 @@ Widget runStorageAlgo(StringBuffer log, List<StorageOperation> operations) {
 }
 
 class HardDrive {
-  final List<String> blocks = List.generate(DRIVE_SIZE, (index) => '');
+  final List<String?> blocks = List.generate(DRIVE_SIZE, (index) => '');
   final StringBuffer log;
 
   HardDrive(this.log);
 
-  bool addFile(String fileName, num size) {
+  bool addFile(String? fileName, num size) {
     if (size > DRIVE_SIZE) {
       log.writeln('Attempted to add file ($size) larger than the total drive size ($DRIVE_SIZE)!');
       return false;
@@ -70,7 +70,7 @@ class HardDrive {
     log.writeln('Allocating $size blocks to $fileName');
     num block = 0;
     for (int i = 1; i <= size; i++) {
-      while (blocks[block] != '') {
+      while (blocks[block as int] != '') {
         log.write(blocks[block]);
         block++;
         if (block >= blocks.length) {
@@ -90,7 +90,7 @@ class HardDrive {
     return true;
   }
 
-  void deleteFile(String fileName) {
+  void deleteFile(String? fileName) {
     log.writeln('Deleting $fileName');
     for (int i = 0; i < blocks.length; i++) {
       if (blocks[i] == fileName) {
@@ -104,10 +104,10 @@ class HardDrive {
   }
 
   List<num> fragmentedFiles() {
-    List<String> files = [];
+    List<String?> files = [];
     List<num> sizes = [];
     List<bool> fragmented = [];
-    String last = blocks[0];
+    String? last = blocks[0];
     for (int i = 0; i < blocks.length; i++) {
       if (blocks[i] == '') {
         last = blocks[i];
@@ -132,7 +132,7 @@ class HardDrive {
       log.writeln('${files[i]} size: ${sizes[i]}${fragmented[i] ? ', fragmented' : ''}');
       if (fragmented[i]) {
         fragmentedCount++;
-        fragmentedSize += sizes[i];
+        fragmentedSize += sizes[i] as int;
       }
     }
     var result = [fragmentedCount / files.length, fragmentedSize / sizes.reduce((value, element) => value + element)];
@@ -143,9 +143,9 @@ class HardDrive {
 }
 
 class StorageOperation {
-  String fileName;
-  StorageOperationType operationType;
-  num size;
+  String? fileName;
+  StorageOperationType? operationType;
+  late num size;
 
   StorageOperation(String input) {
     var split = input.split(',');
@@ -207,7 +207,7 @@ StorageResult resultFromList(List<TableRow> list) {
 }
 
 TableRow rowFromDrive(HardDrive drive, int step, bool finalRow, bool failed) {
-  Color freeColor = Colors.grey[600];
+  Color? freeColor = Colors.grey[600];
   if (finalRow) {
     if (failed) {
       freeColor = Colors.red;
@@ -228,7 +228,7 @@ TableRow rowFromDrive(HardDrive drive, int step, bool finalRow, bool failed) {
         child: Container(
           color: color,
           alignment: Alignment.center,
-          child: Text(finalRow ? "" : drive.blocks[index]),
+          child: Text(finalRow ? "" : drive.blocks[index]!),
         ),
       );
     },

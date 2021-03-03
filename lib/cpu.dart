@@ -11,7 +11,7 @@ enum CpuAlgo { FCFS, SJF, RR, TL_FCFS }
 
 const int RR_WINDOW = 3;
 
-String getCpuData(DataChoice valik) {
+String getCpuData(DataChoice? valik) {
   switch (valik) {
     case DataChoice.First:
       return "0,5;6,9;6,5;15,10";
@@ -42,12 +42,12 @@ Widget FCFS(List<List<num>> processes, StringBuffer log) {
   num totalTime = 0;
   num count = 1;
   num totalWait = 0;
-  List<CpuProcessBar> resList = new List();
+  List<CpuProcessBar> resList = [];
   for (var process in processes) {
     if (process[0] > totalTime) {
-      int time = process[0] - totalTime;
+      int time = process[0] - totalTime as int;
       log.write("\nWaiting for $time");
-      resList.add(new CpuProcessBar(totalTime, totalTime + time, "", Colors.grey));
+      resList.add(new CpuProcessBar(totalTime as int, totalTime + time, "", Colors.grey));
       totalTime += time;
     }
     //TODO: Add generated colors here as well
@@ -58,8 +58,8 @@ Widget FCFS(List<List<num>> processes, StringBuffer log) {
       color = Colors.orange;
     }
     log.write("\nRunning P$count");
-    resList.add(CpuProcessBar(totalTime, totalTime + process[1], "P$count", color));
-    totalTime += process[1];
+    resList.add(CpuProcessBar(totalTime as int, totalTime + (process[1] as int), "P$count", color));
+    totalTime += process[1] as int;
     count += 1;
   }
 
@@ -72,7 +72,7 @@ Widget SJF(List<List<num>> processes, StringBuffer log) {
   num totalTime = 0;
   num count = 0;
   num totalWait = 0;
-  List<CpuProcessBar> resList = new List();
+  List<CpuProcessBar> resList = [];
   List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
@@ -81,7 +81,7 @@ Widget SJF(List<List<num>> processes, StringBuffer log) {
   Queue<List<num>> backlog = new Queue();
   while (true) {
     if (currentProcess[1] == 0) {
-      resList.add(CpuProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+      resList.add(CpuProcessBar(totalTime - currentWork as int, totalTime as int, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2] as int] : Colors.grey));
       log.write("\nFinished P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
       currentWork = 0;
       if (backlog.isNotEmpty) {
@@ -94,13 +94,13 @@ Widget SJF(List<List<num>> processes, StringBuffer log) {
     }
 
     if (count <= processes.length - 1) {
-      while (processes[count][0] <= totalTime) {
+      while (processes[count as int][0] <= totalTime) {
         log.write("\nStarting process P${count + 1} ${processes[count]} at time $totalTime");
         processes[count].add(count);
         if (processes[count][1] < currentProcess[1]) {
           if (currentWork != 0) {
             resList
-                .add(CpuProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+                .add(CpuProcessBar(totalTime - currentWork as int, totalTime as int, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2] as int] : Colors.grey));
           }
           log.write("\n   New process is shorter than existing, saving work ($currentWork) in bar and starting P${count + 1}");
           currentWork = 0;
@@ -136,7 +136,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
   num totalTime = 0;
   num count = 0;
   num totalWait = 0;
-  List<CpuProcessBar> resList = new List();
+  List<CpuProcessBar> resList = [];
   List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
@@ -146,7 +146,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
   Queue<List<num>> queue = new Queue();
   while (true) {
     if (count <= processes.length - 1) {
-      while (processes[count][0] <= totalTime) {
+      while (processes[count as int][0] <= totalTime) {
         log.write("\nQueueing process P${count + 1} ${processes[count]} at time $totalTime");
         processes[count].add(count);
         queue.add(processes[count]);
@@ -157,7 +157,7 @@ Widget RR(List<List<num>> processes, StringBuffer log, int n) {
 
     if (currentProcess[1] == 0 || currentWork == n || (currentProcess[2] == -1 && (backlog.isNotEmpty || queue.isNotEmpty))) {
       if (currentWork != 0)
-        resList.add(CpuProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+        resList.add(CpuProcessBar(totalTime - currentWork as int, totalTime as int, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2] as int] : Colors.grey));
       log.write("\nStopping P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
       if (currentProcess[1] != 0 && currentProcess[2] != -1) {
         log.write("\n   Backlogged P${currentProcess[2] + 1}");
@@ -196,7 +196,7 @@ Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
   num totalTime = 0;
   num count = 0;
   num totalWait = 0;
-  List<CpuProcessBar> resList = new List();
+  List<CpuProcessBar> resList = [];
   List<Color> colors = List.generate(processes.length, (index) => Color((Random(index).nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
   var delayProcess = [0, double.infinity, -1];
 
@@ -207,7 +207,7 @@ Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
   bool processingLow = false;
   while (true) {
     if (currentProcess[1] == 0) {
-      resList.add(CpuProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+      resList.add(CpuProcessBar(totalTime - currentWork as int, totalTime as int, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2] as int] : Colors.grey));
       log.write("\nFinished P${currentProcess[2] + 1}, saving work ($currentWork) in bar");
       currentWork = 0;
       if (hQueue.isNotEmpty) {
@@ -226,13 +226,13 @@ Widget TL_FCFS(List<List<num>> processes, StringBuffer log) {
     }
 
     if (count <= processes.length - 1) {
-      while (processes[count][0] <= totalTime) {
+      while (processes[count as int][0] <= totalTime) {
         log.write("\nQueueing process P${count + 1} ${processes[count]} at time $totalTime");
         processes[count].add(count);
         if ((processes[count][1] <= 6 && processingLow) || currentProcess[2] == -1) {
           if (currentWork != 0) {
             resList
-                .add(CpuProcessBar(totalTime - currentWork, totalTime, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2]] : Colors.grey));
+                .add(CpuProcessBar(totalTime - currentWork as int, totalTime as int, currentProcess[2] != -1 ? "P${currentProcess[2] + 1}" : "", currentProcess[2] != -1 ? colors[currentProcess[2] as int] : Colors.grey));
           }
           log.write("\n   New process is higher priority than P${currentProcess[2] + 1}, saving work ($currentWork) in bar and starting P${count + 1}");
           currentWork = 0;

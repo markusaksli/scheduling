@@ -19,15 +19,15 @@ class AlgoApp extends StatefulWidget {
 }
 
 class _AlgoAppState extends State<AlgoApp> {
-  DataChoice dataChoice = DataChoice.First;
-  Component component = Component.CPU;
-  TextEditingController _controller;
-  List<bool> selectedAlgo;
+  DataChoice? dataChoice = DataChoice.First;
+  Component? component = Component.CPU;
+  TextEditingController? _controller;
+  late List<bool> selectedAlgo;
   bool hasResult = false;
   bool error = false;
   String choiceText = "";
 
-  Widget resWidget;
+  Widget? resWidget;
   FocusNode focus = FocusNode();
 
   @override
@@ -123,11 +123,11 @@ class _AlgoAppState extends State<AlgoApp> {
                                         }
                                         switch (component) {
                                           case Component.CPU:
-                                            return ProcessTable.fromProcessList(processes, "Arrival time", "Length", (int index) => "P${index + 1}");
+                                            return ProcessTable.fromProcessList(processes as List<List<num>>, "Arrival time", "Length", (int index) => "P${index + 1}");
                                           case Component.Memory:
-                                            return ProcessTable.fromProcessList(processes, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
+                                            return ProcessTable.fromProcessList(processes as List<List<num>>, "Amount of memory", "Length", (int index) => MemoryProcess.generateName(index));
                                           case Component.Storage:
-                                            return ProcessTable.fromStorageList(processes);
+                                            return ProcessTable.fromStorageList(processes as List<StorageOperation>);
                                           default:
                                             return TableErrorContainer(
                                               text: "No component selected",
@@ -152,7 +152,7 @@ class _AlgoAppState extends State<AlgoApp> {
                     const SizedBox(
                       height: 10,
                     ),
-                    resWidget,
+                    resWidget!,
                     const SizedBox(
                       height: 10,
                     ),
@@ -167,7 +167,7 @@ class _AlgoAppState extends State<AlgoApp> {
   }
 
   ToggleButtons buildAlgoToggle(BoxConstraints constraints) {
-    List algoEnum = getComponentAlgoEnum();
+    List algoEnum = getComponentAlgoEnum()!;
     return ToggleButtons(
       selectedColor: Colors.orange,
       selectedBorderColor: Colors.orange[200],
@@ -208,7 +208,7 @@ class _AlgoAppState extends State<AlgoApp> {
         value: DataChoice.values[index],
         activeColor: Colors.orangeAccent,
         groupValue: dataChoice,
-        onChanged: (DataChoice value) {
+        onChanged: (DataChoice? value) {
           setState(() {
             dataChoice = value;
             if (value != DataChoice.Own) {
@@ -262,7 +262,7 @@ class _AlgoAppState extends State<AlgoApp> {
         value: Component.values[index],
         activeColor: Colors.orangeAccent,
         groupValue: component,
-        onChanged: (Component value) {
+        onChanged: (Component? value) {
           setState(() {
             component = value;
             resWidget = Padding(
@@ -286,8 +286,8 @@ class _AlgoAppState extends State<AlgoApp> {
     return componentList;
   }
 
-  List getComponentAlgoEnum() {
-    List algoEnum;
+  List? getComponentAlgoEnum() {
+    List? algoEnum;
     switch (component) {
       case Component.CPU:
         algoEnum = CpuAlgo.values;
@@ -304,11 +304,11 @@ class _AlgoAppState extends State<AlgoApp> {
 
   void setSelectedAlgoList() {
     setState(() {
-      selectedAlgo = List.generate(getComponentAlgoEnum().length, (index) => false);
+      selectedAlgo = List.generate(getComponentAlgoEnum()!.length, (index) => false);
     });
   }
 
-  String getData(DataChoice choice) {
+  String getData(DataChoice? choice) {
     if (choice == DataChoice.Own) {
       return choiceText;
     }
@@ -341,7 +341,7 @@ class _AlgoAppState extends State<AlgoApp> {
     StringBuffer log = new StringBuffer();
     log.writeln("Parsing input");
     try {
-      Widget algoResult;
+      Widget? algoResult;
       switch (component) {
         case Component.CPU:
           algoResult = runCpuAlgo(CpuAlgo.values[algoIndex], log, parseComputationProcesses());
@@ -372,28 +372,28 @@ class _AlgoAppState extends State<AlgoApp> {
 
 class TableErrorContainer extends StatelessWidget {
   const TableErrorContainer({
-    Key key,
+    Key? key,
     this.text,
   }) : super(key: key);
 
-  final String text;
+  final String? text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.grey[600],
       alignment: Alignment.center,
-      child: Text(text),
+      child: Text(text!),
     );
   }
 }
 
 class TableCellPadded extends StatelessWidget {
-  final EdgeInsets padding;
+  final EdgeInsets? padding;
   final Widget child;
-  final TableCellVerticalAlignment verticalAlignment;
+  final TableCellVerticalAlignment? verticalAlignment;
 
-  const TableCellPadded({Key key, this.padding, @required this.child, this.verticalAlignment}) : super(key: key);
+  const TableCellPadded({Key? key, this.padding, required this.child, this.verticalAlignment}) : super(key: key);
 
   @override
   TableCell build(BuildContext context) => TableCell(verticalAlignment: verticalAlignment, child: Padding(padding: padding ?? EdgeInsets.all(5.0), child: child));
@@ -452,7 +452,7 @@ class ProcessTable extends StatelessWidget {
         List<TableCellPadded> cellList = [
           TableCellPadded(child: Text((index + 1).toString())),
           TableCellPadded(child: Text(operation.operationType.toString().split('.')[1])),
-          TableCellPadded(child: Text(operation.fileName)),
+          TableCellPadded(child: Text(operation.fileName!)),
         ];
         if (operation.operationType == StorageOperationType.DELETE) {
           cellList.add(const TableCellPadded(child: Text('Entire file')));
@@ -498,8 +498,8 @@ class ProcessTable extends StatelessWidget {
   }
 
   const ProcessTable({
-    Key key,
-    @required this.rows,
+    Key? key,
+    required this.rows,
   }) : super(key: key);
 
   @override
@@ -515,7 +515,7 @@ class ProcessTable extends StatelessWidget {
 }
 
 class AlgoResult extends StatelessWidget {
-  final Widget resultWidget;
+  final Widget? resultWidget;
   final StringBuffer log;
 
   const AlgoResult(this.resultWidget, this.log);
@@ -526,11 +526,11 @@ class AlgoResult extends StatelessWidget {
       padding: const EdgeInsets.all(20.0),
       child: Container(
         padding: EdgeInsets.all(10.0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10.0), color: Colors.grey[800], boxShadow: [BoxShadow(color: Colors.grey[900], blurRadius: 15)]),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10.0), color: Colors.grey[800], boxShadow: [BoxShadow(color: Colors.grey[900]!, blurRadius: 15)]),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            resultWidget,
+            resultWidget!,
             Container(
               margin: EdgeInsets.fromLTRB(0.0, 50, 0.0, 0.0),
               decoration: BoxDecoration(
